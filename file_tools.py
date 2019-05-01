@@ -28,27 +28,33 @@ def matchFileIgnoreExt(query, strList):
 				return str
 	except :
 		print( 'No matching files found')
-		
-def findFileByExt(ext, dir):
+	
+	# Finds file(s) with given ending, assuming there should only be one in given folder. Setting all to
+	# true will return all files in dir with ext as list
+def findFileByExt(ext, dir, all = False): 
 	dir_contents = list(filter(lambda x : x.endswith(ext), os.listdir(dir)))
 	if(len(dir_contents) < 1) :
-		print( "No files ending with " + ext + " found in " + dir)
+		print( "No files ending with '" + ext + "' found in " + dir)
 		return False
 	elif(len(dir_contents) == 1) :
-		print(dir_contents[0])
+		#print(dir_contents[0])
 		return(dir_contents[0])
+	elif all :
+		print(str(len(dir_contents)) + " files found in " + dir )
+		if(len(dir_contents)) < 10 : print(dir_contents)		# Just in case
+		return dir_contents
 	else:
-		print(str(len(dir_contents)) + " files ending with " + ext + " found in " + dir)
+		print(str(len(dir_contents)) + " files found in " + dir +  " : " )
 		if(len(dir_contents)) < 10 : print(dir_contents)
 		return False
 		
 def makeDirHierarchy(dirLayout):
 	try : 
 		for parent in dirLayout : 
-			os.mkdir(parent)
-			for node in dirLayout[parent]:
-				dirLayout[parent][os.path.join(parent,node)] = dirLayout[parent].pop(node)
+			if not os.path.exists(parent) : 
+				os.mkdir(parent)
+			for subdir in list(dirLayout[parent].keys()):
+				dirLayout[parent][os.path.join(parent,subdir)] = dirLayout[parent].pop(subdir)
 			makeDirHierarchy(dirLayout[parent])
-	except :  
-		pass
-
+	except :  		
+		print("Error in establishing directory framework.")

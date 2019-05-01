@@ -1,15 +1,19 @@
-import os, sys, glob, json, gzip, tarfile
-import BlastPrep
+import os, sys, glob, json, gzip, tarfile, time
+import BlastPrep, AlignmentPrep
 from tools import *
+
+config = json.load(open('config.json'))
+dirTree = config.get("directoryTree")
+paths = config.get("paths")
+BlastDBSettings = config.get("BlastDBSettings")
+BlastSearchSettings = config.get("BlastSearchSettings")
+BlastHitSelectOptions = config.get("BlastHitSelectionSettings")
+project = config.get("project")
 
 def init():
 	'''
 	'''
-	config = json.load(open('config.json'))
-	dirTree = config["directoryTree"]
-	paths = config["paths"]
-	BlastDBSettings = config["BlastDBOptions"]
-	BlastHitSelectOptions = config["BlastHitSelectionOptions"]
+	
 	
 	for tar in filter(lambda x : x.endswith('.tar'), os.listdir(paths['genomes'])):
 		os.system("tar -xvf " + paths['genomes'] + tar + ' --directory=' + paths['genomes'])
@@ -25,34 +29,72 @@ def init():
 	for gz in os.listdir(paths['genome_stats']): 
 		os.system("gunzip -r " + paths['genome_stats'] + gz)
 
-	for dir in ["00.PrepareInput", "01.BlastResults", "02.PrepareAlignments", "03.Alignments"] :
-		if not os.path.exists: 
-			file_tools.makeDirHierarchy(dirTree)
+	file_tools.makeDirHierarchy(dirTree)
+	print("Initializing directory system according to directoryTree provided in config.JSON")
 		
 if __name__ == "__main__":
 	
 	# Add checkpoints between each function call to save resources/later func fails dont have to repeat everything
 	
-	if not(os.path.exists('./00.PrepareInput/ReformattedFastas/')):
-		init()
-		
-	if not(file_tools.findFileByExt('.bed', paths['ref_genome'])):
+	for dir in ["00.PrepareInput", "01.BlastResults", "02.PrepareAlignments", "03.Alignments"] :
+		if not os.path.exists(dir): 
+			init()
+			break
+
+	bed = file_tools.findFileByExt('.bed', paths['ref_genome'])
+	if not(bed):
 		BlastPrep.gff2Bed()
-		
-	# Not recommended but if user wants to use their own modified fasta must add this ext
-	if not(file_tools.findFileByExt('_modified_for_parsing.fna', paths['ref_genome'])):
-		BlastPrep.bed2fasta()
-	
-	#Custom headers must be placed in 'project/genomes/' dir and named/end with 'headers.txt' as tabulated file : custom_assembly_name '\t' genome_file_name 
-	if file_tools.findFileByExt("headers.txt", './genomes/'):
-		BlastPrep.renameHeaders(file_tools.findFileByExt("headers.txt", './genomes/'))
 	else:
-		BlastPrep.renameHeaders(BlastPrep.newHeadersfromStats())
+		print("Located bed file. Skipping extraction from .gff : " + bed)
+		
+	genes = file_tools.findFileByExt('genes.fna', paths['ref_genome'])
+	if not genes:
+		BlastPrep.bed2fasta()
+	else:
+		print("Located reference genes. Skipping extraction from bed : " + genes)	
+ 
+	#Custom headers must be placed in 'project/genomes/' dir and named/end with 'headers.txt' as tabulated file : custom_assembly_name '\t' genome_file_name			
+	if not file_tools.findFileByExt('_reformatted.fna', './00.PrepareInput/ReformattedFastas/', all = True) :
+		headers = file_tools.findFileByExt(("Headers.txt", "headers.txt"), './genomes/')
+		if headers:
+			print("Modifying genome fastas using provided Headers text file : \t" + headers)
+			BlastPrep.renameHeaders("genomes/" + file_tools.findFileByExt("Headers.txt", './genomes/'))
+		else:
+			print("No custom header file provided. Creating unique headers from genome stats files.")
+			BlastPrep.renameHeaders(BlastPrep.newHeadersfromStats())
+	else : 
+		print("Located genome fastas with renamed headers. Skipping header modification in genome files.")
 	
-	if(len(os.listdir('./00.PrepareInput/BlastDBs/')) < 2):
-		BlastPrep.makeBlastDatabase('')
+	try:	
+		if(len(os.listdir('./00.PrepareInput/BlastDBs/')) < 2):
+			BlastPrep.makeBlastDatabase(BlastDBSettings)
+			# TO-Do - save makeblastdb output to logs
+		else:
+			print("Located Blast Database.")
+	except:
+		print("Error in creating Blast Database. Check logs.")
+		
+	try:	# customize blast search(except query, db and out) in config.JSON file. Empty arguments are ignored.
+		query =	 paths['ref_genome'] + file_tools.findFileByExt("_genes.fna", paths['ref_genome'])
+		db = './00.PrepareInput/BlastDBs/allGenomesDB'
+		blastout = './01.BlastResults/' + query.split('/')[-1].replace('.fna','.vs.all_genomes')
+		blastcmd = ('blastn -query ' + query + ' -db ' + db + ' -out ' + blastout) 
+		for arg, value in BlastSearchSettings.items() :
+			if(value) : blastcmd += (' -' + arg + ' ' +	 value)
+		print(blastcmd + ' &')
+	except: 
+		print("Error in Blast Command : " + blastcmd) 
 	
-	os.system('blastn -query ' + paths[ -db ~/00.PrepareInput/BlastBDs/all_genomes -outfmt 7 > refgenes.all_genomes.blastdef.tab &
-	
-	
-	
+	if not file_tools.findFileByExt('.bed','02.PrepareAlignments/bedfilePerQuery/', all = True) :
+		print("Extracting bed files from blast output.")
+		bedlist = AlignmentPrep.blastout2HSPbed()
+		print(str(len(bedlist)) + " bed files written.")
+		
+	if not file_tools.findFileByExt('.fasta','0
+	2.PrepareAlignments/fastaPerQuery/', all = True) : 
+		print("Extracting fasta files from bed files.")
+		os.system("snakemake -j " + project["cores"] + " -s extractBedfiles.snake ")
+		
+	if not file_tools.findFileByExt('.fasta','02.PrepareAlignments/fastasToAlign/', all = True) :
+		fastasToAlign = AlignmentPrep.selectFastasToAlign()
+		print("Selected ", len(fastasToAlign), " fastas to align.")

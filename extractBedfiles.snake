@@ -1,0 +1,29 @@
+import os, sys
+from tools import file_tools
+
+configfile: "./config.json"
+
+IN_DIR = './02.PrepareAlignments/bedfilePerQuery/'  
+
+OUT_DIR = './02.PrepareAlignments/fastaPerQuery/'
+
+
+SAMPLES =  [s[:-4] for s in os.listdir(IN_DIR) if s.endswith(".bed")]
+# samples are all bedfiles in the input directory with the extension .bed. 
+
+
+rule all:
+    input:  expand(OUT_DIR+"/{s}.fasta",s=SAMPLES),            
+    message: "Created " + str(len(os.listdir(OUT_DIR))) + " fasta files."
+    
+def findFasta():
+	return './00.PrepareInput/BlastDBs/' + file_tools.findFileByExt('.fasta','./00.PrepareInput/BlastDBs/')
+	
+# get a fasta file from a bedfile of BLAST hits
+rule bed_to_fasta:
+    input:  
+        bed = IN_DIR+"/{s}.bed",
+        fasta = findFasta()
+    output: OUT_DIR+"/{s}.fasta"
+    threads: int(config["project"]["cores"])
+    shell: "bedtools getfasta -fi {input.fasta} -bed {input.bed} -s -fo {output}"
