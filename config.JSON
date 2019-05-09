@@ -1,52 +1,61 @@
 {
-"paths" :
-	{
-	"parent": "~/software/pipelineTest/",
-	"genomes": "./genomes/ncbi-genomes-2019-04-05/",
-	"ref_genome": "./genomes/reference_genome/",
-	"genome_stats": "./stats/ncbi-genomes-2019-04-05/",
-	"00": "./00.PrepareInput/",
-	"01": "./01.BlastResults/",
-	"02": "./02.PrepareAlignments/",
-	"03": "./03.Alignments/"
+	"paths": {
+		"parent": "~/software/pipelineTest/",
+		"genomes": "./genomes/ncbi-genomes-2019-04-05/",
+		"ref_genome": "./genomes/reference_genome/",
+		"genome_stats": "genomes/stats/ncbi-genomes-2019-04-05/",
+		"00": "./00.PrepareInput/",
+		"01": "./01.BlastResults/",
+		"02": "./02.PrepareAlignments/",
+		"03": "./03.Alignments/"
 	},
 	
-"directoryTree" :
-	{
-	"00.PrepareInput" : 
-		{ 
-		"BlastDBs" : {}, 
-		"LOG" : {}, 
-		"ReformattedFastas" : {} 
+	"project":{
+		"genomes": "32",
+		"cores": "25"
 		},
-	"01.BlastResults" : {},
-	"02.PrepareAlignments" : 
-		{
-		"bedfilePerQuery" : {}, 
-		"fastaPerQuery" : {}, 
-		"fastasToAlign" : {} 
-		},
-	"03.Alignments" : 
-		{ 
-		"MultipleSeqAlignment" : {}, 
-		"TrimmedMSAs" : {}, 
-		"ConcatenatedMSAs" : {}
-		},
-	"genomes" : 
-		{
-		"referenceGenome" : {}, 
-		"stats" : {}
-		},
-	"trees" : {}
-	},
 	
-"BlastDBOptions" : 
-	{
+	"directoryTree": {
+		"00.PrepareInput": {
+			"BlastDBs": {},
+			"LOG": {},
+			"ReformattedFastas": {}
+		},
+		"01.BlastResults": {},
+		"02.PrepareAlignments": {
+			"bedfilePerQuery": {},
+			"fastaPerQuery": {},
+			"fastasToAlign": {}
+		},
+		"03.Alignments": {
+			"MultipleSeqAlignment": {},
+			"TrimmedMSAs": {},
+			"ConcatenatedMSAs": {}
+		},
+		"genomes": {
+			"reference_genome": {},
+			"stats": {}
+		},
+		"trees": {}
 	},
-	
-"BlastHitSelectionOptions" : 
-	{
-	"PercentOverlap" : 90,
-	"MinEvalue" : 0.001
+
+	"BlastDBSettings": {
+		"name": ""
+	},
+
+	"BlastSearchSettings": {
+		"outfmt": "7",
+		"evalue": "10",
+		"penalty": "",
+		"reward": "",
+		"import_search_strategy": "",
+		"numthreads": ""
+
+	},
+
+	"BlastHitSelection": {
+		"MinOverlap": ".90",
+		"MaxEvalue": "0.001",
+		"BlastOutputFile" : ""
 	}
 }
