@@ -7,7 +7,8 @@
 		"00": "./00.PrepareInput/",
 		"01": "./01.BlastResults/",
 		"02": "./02.PrepareAlignments/",
-		"03": "./03.Alignments/"
+		"03": "./03.Alignments/",
+		"trimal": "/home/jmhodges/software/trimAl/source/"
 	},
 	
 	"project":{
@@ -44,6 +45,7 @@
 	},
 
 	"BlastSearchSettings": {
+		"task" : "blastn",
 		"outfmt": "7",
 		"evalue": "10",
 		"penalty": "",
@@ -53,9 +55,12 @@
 
 	},
 
-	"BlastHitSelection": {
-		"MinOverlap": ".90",
+	"AlignmentOptions": {
+		"BlastOutputFile" : "",
+		"MinSeqOverlap": ".90",
 		"MaxEvalue": "0.001",
-		"BlastOutputFile" : ""
+		"MinResidueOverlap": ".70",
+		"GapThreshold" : "0.6"
+		
 	}
 }

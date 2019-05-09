@@ -2,7 +2,7 @@ import os, sys, glob, json
 
 from tools import fasta_tools, file_tools
 
-config = json.load(open('config.json'))
+config = json.load(open('config.JSON'))
 paths = config.get("paths")
 parsingOptions = config.get("BlastHitSelection")
 project = config.get("project")

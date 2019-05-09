@@ -1,7 +1,7 @@
 import os, sys
 from tools import file_tools
 
-configfile: "./config.json"
+configfile: "./config.JSON"
 
 IN_DIR = './02.PrepareAlignments/bedfilePerQuery/'  
 

@@ -1,13 +1,13 @@
 import os, sys, glob, json, gzip, tarfile, time
-import BlastPrep, AlignmentPrep
+import BlastPrep, AlignmentPrep, ProcessAlignments
 from tools import *
 
-config = json.load(open('config.json'))
+config = json.load(open('config.JSON'))
 dirTree = config.get("directoryTree")
 paths = config.get("paths")
 BlastDBSettings = config.get("BlastDBSettings")
 BlastSearchSettings = config.get("BlastSearchSettings")
-BlastHitSelectOptions = config.get("BlastHitSelectionSettings")
+BlastHitSelectOptions = config.get("AlignmentOptions")
 project = config.get("project")
 
 def init():
@@ -74,7 +74,9 @@ if __name__ == "__main__":
 	except:
 		print("Error in creating Blast Database. Check logs.")
 		
-	try:	# customize blast search(except query, db and out) in config.JSON file. Empty arguments are ignored.
+	try:	
+	# customize blast search(except query, db and out) in config.JSON file. Empty arguments are ignored.
+	# TO-do make outfmt non-customizable
 		query =	 paths['ref_genome'] + file_tools.findFileByExt("_genes.fna", paths['ref_genome'])
 		db = './00.PrepareInput/BlastDBs/allGenomesDB'
 		blastout = './01.BlastResults/' + query.split('/')[-1].replace('.fna','.vs.all_genomes')
@@ -90,11 +92,22 @@ if __name__ == "__main__":
 		bedlist = AlignmentPrep.blastout2HSPbed()
 		print(str(len(bedlist)) + " bed files written.")
 		
-	if not file_tools.findFileByExt('.fasta','0
-	2.PrepareAlignments/fastaPerQuery/', all = True) : 
+	if not file_tools.findFileByExt('.fasta','02.PrepareAlignments/fastaPerQuery/', all = True) : 
 		print("Extracting fasta files from bed files.")
 		os.system("snakemake -j " + project["cores"] + " -s extractBedfiles.snake ")
 		
 	if not file_tools.findFileByExt('.fasta','02.PrepareAlignments/fastasToAlign/', all = True) :
 		fastasToAlign = AlignmentPrep.selectFastasToAlign()
 		print("Selected ", len(fastasToAlign), " fastas to align.")
+		
+	if not file_tools.findFileByExt('.fasta','03.Alignments/MultipleSeqAlignment/', all = True) or not file_tools.findFileByExt('.fasta','03.Alignments/TrimmedMSAs/', all = True): 
+		print("Aligning selected genes based on parameters provided in config.json.")
+		os.system("snakemake --quiet -j" + project["cores"] + " -s alignAndTrimGenes.snake ")
+		
+	if not file_tools.findFileByExt('concatenated_alignment.fasta', '03.Alignments/ConcatenatedMSAs'):
+		print("Filtering fasta files from '03.Alignments/ConcatenatedMSAs' for genes that are represented in all species and concatenating to a single file.")
+		ProcessAlignments.concatenateFastas()
+		
+		
+		
+		

@@ -2,7 +2,7 @@ import os, sys, glob, json, time
 
 from tools import fasta_tools, file_tools
 
-config = json.load(open('config.json'))
+config = json.load(open('config.JSON'))
 paths = config.get("paths")
 BlastDBSettings = config.get("BlastDBSettings")
 BlastSearchSettings = config.get("BlastSearchSettings")
@@ -11,7 +11,6 @@ BlastHitSelectOptions = config.get("BlastHitSelectionSettings")
 ext = ".fna", ".fasta", ".fa"
 
 def gff2Bed():
-	
 	
 	try:
 		genes = 0
