@@ -3,13 +3,14 @@ from multiprocessing import Pool
 from tools import fasta_tools, file_tools
 
 config = json.load(open('config.JSON'))
-paths = config.get("paths")
-parsingOptions = config.get("BlastHitSelection")
-project = config.get("project")
-
+projectName = file_tools.getField("project_name")
+genomes_p = file_tools.getField("genomes_p")
+ref_genome_p = file_tools.getField("ref_genome_p")
+ref_genome_f = file_tools.getField("ref_genome_fasta")
+num_genomes = int(file_tools.getField("num_genomes"))
+cores = int(file_tools.getField("num_cores"))
 ext = ".fna", ".fasta", ".fa"
-numSpecies = int(project["genomes"])
-cores = int(project["cores"])
+
 inDir = "03.Alignments/TrimmedMSAs/"
 outDir = "03.Alignments/ConcatenatedMSAs/"
 
@@ -24,42 +25,22 @@ def fasta2dicts(fasta_fname, split_str):
 	A dictionary: species names --> sequences
 	'''
 	try:
-		id2seq    = {}
-		fastafile = open(fasta_fname)
-
-		line      = fastafile.readline()
-		currentid = line.strip().split(split_str)[0][1:]
-		seq = ''
-		assert len(line) > 2 and line[0] == '>'
-
-		id2seq.update({currentid:seq})  #first iter --> {firstID:""}
-		line = fastafile.readline()  # line --> first line firstSeq
-		while(len(line)>0):
-			#id2seq.update({currentid:seq.upper()})
-			if line[0]=='>': # new header
-				id2seq.update({currentid:seq.upper()})
-				currentid = line.strip().split(split_str)[0][1:]
-				
-				if currentid in id2seq:
+		id2seq = {}
+		seqid, seq = '', ''
+		for line in open(fasta_fname).readlines():
+			if len(line) <2: continue
+			if line.strip()[0] == '>': #header
+				seqid = line.strip().split(split_str)[0][1:]
+				if seqid in id2seq:
 					raise KeyError("Error! Identical species IDs found in the same file : " + fastafname)
-				if seq[-1] == '*': 
-					seq = seq[:-1]
 				seq=''
-			else:
-				seq += line.strip()	# add this line to sequence	
-			line = fastafile.readline()
-		#the last one
-		if seq[-1] == '*': seq = seq[:-1]
-		id2seq[currentid]=seq.upper()
-		
-	except AssertionError:
-		print("Error parsing fasta as a dictionary : " + fastafname)
-		print("This should never happen.")
-		quit()
+			if line.strip()[0] != '>':
+				seq += line.strip()
+			if seq and seq[-1] == '*': seq = seq[:-1]
+			#print("Updating {" + seqid + ' : ' + seq + '}')
+			id2seq.update({seqid:seq})
 	except KeyError as err:
 		print(err)
-	finally:	
-		fastafile.close()
 	return id2seq
 
 
@@ -85,7 +66,6 @@ def select_and_concatenate(list_of_fasta_fnames, split_str, number_of_species, o
 		for fasta_fname in list_of_fasta_fnames:
 
 			id2seq = fasta2dicts(inDir+fasta_fname, split_str)
-			print(len(id2seq))
 			if len(id2seq) == number_of_species:
 				file_species_set = set(id2seq.keys())	
 
@@ -128,8 +108,17 @@ def select_and_concatenate(list_of_fasta_fnames, split_str, number_of_species, o
 	
 	
 def concatenateFastas():
-	
-	fastasToProcess = file_tools.findFileByExt('.fasta', inDir, all = True)
+	'''
+	Description:
+		This function concatenates all fasta files from inDir folder to a single fasta file. The workload is parralellized and split
+		pseudo-evenly across the provided number of cores, specified in userConfig. One temp file of concatenated fastas is created
+		per core to prevent cross-referencing between threads causing crashes. Temp files are then concatenated on a single core.
+	Input:
+		Directory of aligned and trimmed fasta files of homologous genes found in every input genome
+	Output:
+		A single fasta file containing 
+	'''
+	fastasToProcess = file_tools.findFileByExt('.fasta', inDir, exp = 'all')
 	nfilesPerCore = int(len(fastasToProcess)/cores)
 	concatFuncArgs = []
 	start = 0
@@ -142,19 +131,18 @@ def concatenateFastas():
 		outfname = outDir + 'concat_alignment_'+str(start)+'_tmp.fasta'
 		list_of_files = fastasToProcess[start:end]
 		#print(len(list_of_files))
-		concatFuncArgs.append([list_of_files, '__', numSpecies, outfname] )
+		concatFuncArgs.append([list_of_files, '__', num_genomes, outfname] )
 		start = end
 		concatenated_fasta_tmpfiles.append(outfname)
  	
  	# Last process call handles remaining fastas
 	list_of_files = fastasToProcess[start:]
 	outfname = outDir + 'concat_alignment_'+str(start)+'_tmp.fasta'
-	concatFuncArgs.append( [list_of_files, '__', numSpecies, outfname] )
+	concatFuncArgs.append( [list_of_files, '__', num_genomes, outfname] )
 	concatenated_fasta_tmpfiles.append(outfname)
  	
 	core_pool = Pool(processes=cores) 
 	data = core_pool.starmap(select_and_concatenate, concatFuncArgs)
-	
 	
 	#select_and_concatenate(concatenated_fasta_tmpfiles, args.split_str, args.number_of_species, outfname)
 
