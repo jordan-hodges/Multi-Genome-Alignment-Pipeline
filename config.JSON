@@ -1,25 +1,7 @@
-{
-	"paths": {
-		"parent": "~/software/pipelineTest/",
-		"genomes": "./genomes/ncbi-genomes-2019-04-05/",
-		"ref_genome": "./genomes/reference_genome/",
-		"genome_stats": "genomes/stats/ncbi-genomes-2019-04-05/",
-		"00": "./00.PrepareInput/",
-		"01": "./01.BlastResults/",
-		"02": "./02.PrepareAlignments/",
-		"03": "./03.Alignments/",
-		"trimal": "/home/jmhodges/software/trimAl/source/"
-	},
-	
-	"project":{
-		"genomes": "32",
-		"cores": "25"
-		},
-	
+{	
 	"directoryTree": {
 		"00.PrepareInput": {
 			"BlastDBs": {},
-			"LOG": {},
 			"ReformattedFastas": {}
 		},
 		"01.BlastResults": {},
@@ -37,30 +19,20 @@
 			"reference_genome": {},
 			"stats": {}
 		},
-		"trees": {}
+		"trees": {},
+		"logs":{}
 	},
 
-	"BlastDBSettings": {
-		"name": ""
-	},
-
-	"BlastSearchSettings": {
-		"task" : "blastn",
-		"outfmt": "7",
-		"evalue": "10",
-		"penalty": "",
-		"reward": "",
-		"import_search_strategy": "",
-		"numthreads": ""
-
-	},
-
-	"AlignmentOptions": {
-		"BlastOutputFile" : "",
-		"MinSeqOverlap": ".90",
-		"MaxEvalue": "0.001",
-		"MinResidueOverlap": ".70",
-		"GapThreshold" : "0.6"
-		
-	}
+	"requiredParams" : [
+		"project_name", 
+		"ref_genome_fasta", 
+		"num_genomes",
+		"num_cores",
+		"genomes_p", 
+		"genome_stats_p",
+		"ref_genome_p",
+		"MUMmer_p", 
+		"trimal_p",
+		"raxml_p"
+	]
 }

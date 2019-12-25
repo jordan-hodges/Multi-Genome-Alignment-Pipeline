@@ -25,5 +25,5 @@ rule bed_to_fasta:
         bed = IN_DIR+"/{s}.bed",
         fasta = findFasta()
     output: OUT_DIR+"/{s}.fasta"
-    threads: int(config["project"]["cores"])
+    threads: file_tools.getField('cores')
     shell: "bedtools getfasta -fi {input.fasta} -bed {input.bed} -s -fo {output}"

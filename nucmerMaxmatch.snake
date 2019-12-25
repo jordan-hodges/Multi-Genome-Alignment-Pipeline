@@ -1,0 +1,42 @@
+import os, file_tools
+
+configfile: "./config.JSON"
+MUMmmerPath=config["software"]["MUMmer"]
+
+inDir = config["paths"]["genomes"]
+outDir = './alignments/'
+outDeltas = outDir + 'deltafiles/'
+outCoords = outDir + 'coords/'
+outLogs= outDir + 'logs/'
+
+exts = '.fna', '.fasta', '.fa'
+
+queries = [''.join(x.split('.')[:-1]) for x in os.listdir(inDir) if x.endswith(exts)]
+refs    = file_tools.findFileByExt(exts,config['paths']['ref_genome'])
+
+rule all:
+    input:  expand(outCoords + '/{r}.vs.{q}.nucmer_maxmatch.coords',q=queries,r=refs),            
+    message: "Done "
+
+# align genomes
+rule run_nucmer:
+    input:  
+        Rfasta=config['paths']['ref_genome']+"/{r}"+ exts,
+        Qfasta=inDir+"/{q}"+ exts
+    output: 
+        outDeltas + '/{r}.vs.{q}.nucmer_maxmatch.delta'
+    log: 
+        outLogs + '/{r}.vs.{q}.nucmer_maxmatch.log'
+    params:
+        prefix=outDeltas+'/{r}.vs.{q}.nucmer_maxmatch'
+    run:
+        shell(MUMmmerPath+"nucmer --maxmatch -p {params.prefix} {input.Rfasta} {input.Qfasta} >& {log}")
+        
+# rewrite output to tabular format
+rule delta_to_coords:
+    input:  
+        outDeltas+'/{r}.vs.{q}.nucmer_maxmatch.delta'
+    output: 
+        outCoords+'/{r}.vs.{q}.nucmer_maxmatch.coords'
+    run:
+        shell(MUMmmerPath+"show-coords -r {input} > {output}")

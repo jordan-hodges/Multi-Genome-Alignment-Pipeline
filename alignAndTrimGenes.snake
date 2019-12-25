@@ -1,46 +1,46 @@
-import os
-import sys
-
-configfile: "./config.JSON"
+import os, sys
+os.chdir('../')
+from /home/jmhodges/software/Alternaria/ import tools
 
 IN_DIR = '02.PrepareAlignments/fastasToAlign/'  
 OUT_DIR_MSA = '03.Alignments/MultipleSeqAlignment/'
 OUT_DIR_TRIM = '03.Alignments/TrimmedMSAs/'
 TRIMAL = "/home/jmhodges/software/trimAl/source/"
-THREADS = int(config["project"]["cores"])
+THREADS = file_tools.getField('cores')
 
 SAMPLES =  [s[:-6] for s in os.listdir(IN_DIR) if s.endswith(".fasta")]
 
 def createExt():
 	return "trimal_seqO" + seqoverlap + "_resO" + resoverlap + "_gt" + gapthreshold + ".fasta"
 	
-seqoverlap = str(100*float(config["AlignmentOptions"]["MinSeqOverlap"]))
-resoverlap = config["AlignmentOptions"]["MinResidueOverlap"]
-gapthreshold = config["AlignmentOptions"]["GapThreshold"]
+seqoverlap = str(100*float(file_tools.getField('min_seq_overlap')))
+resoverlap = file_tools.getField('min_residue_overlap')
+gapthreshold = file_tools.getField('gap_threshold')
 trimmedF_ext = createExt()
 
 
 	
 rule all:
-	input: expand(OUT_DIR_TRIM + "/{s}.clustalo." + trimmedF_ext, s=SAMPLES),
+	input: expand(OUT_DIR_TRIM + "{s}.clustalo." + trimmedF_ext, s=SAMPLES),
 	message: "Done "
 
 # align sequences in input fasta files
 rule align_fasta:
-    input:  IN_DIR+"/{s}.fasta"
-    output: OUT_DIR_MSA+"/{s}.clustalo.fasta"
+    input:  IN_DIR + "{s}.fasta"
+    output: OUT_DIR_MSA + "{s}.clustalo.fasta"
     log: "logs/alignAndTrimGenes/{s}.log"
     run:
-    	shell("clustalo -i {input} -o {output} ")
+    	shell("clustalo -i {input} -o {output} > {log}" )
     	shell("sleep 5")
     
 # trim msa
 rule trim_msa:
-    input:  OUT_DIR_MSA+"/{s}.clustalo.fasta"
-    output: OUT_DIR_TRIM + "/{s}.clustalo." + trimmedF_ext
+    input:  OUT_DIR_MSA + "{s}.clustalo.fasta"
+    output: OUT_DIR_TRIM + "{s}.clustalo." + trimmedF_ext
     log: "logs/alignAndTrimGenes/{s}.log"
     run:
-        shell(TRIMAL + "trimal -in {input} -out {output} -seqoverlap " + seqoverlap + " -resoverlap " + resoverlap + " -gt " + gapthreshold),
+        shell(TRIMAL + "trimal -in {input} -out {output} -seqoverlap " + seqoverlap + " -resoverlap " + resoverlap +
+         " -gt " + gapthreshold + " > {log}"),
         shell("sleep 5")
 
 

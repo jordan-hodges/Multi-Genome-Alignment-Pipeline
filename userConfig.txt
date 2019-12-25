@@ -1,0 +1,44 @@
+# User config for importing custom settings
+# Leaving a field blank will have it run with default settings, but we recommend leaving column 1 unchanged
+# When altering these settings remember to separate each column with a tab(or 4 spaces)
+
+# Project - general info specific to project
+
+project_name    	ZtriTest
+output_directory	C:\Users\Jordan\Desktop\GenomeOrganization_Master    # Directory to create project folder 
+ref_genome_fasta    	GCA_000219625.1_MYCGR_v2.0_genomic.fna 		# Name of file as found in genomes folder
+num_genomes    		32
+num_cores		20
+
+# Paths - add full paths to softwares or relative paths to directories here 
+
+genomes_p    		genomes/ncbi-genomes-2019-04-05/
+genome_stats_p    	genomes/stats/ncbi-genomes-2019-04-05/
+ref_genome_p    	genomes/reference_genome/
+MUMmer_p    		/home/jmhodges/software/MUMmer3.23/
+trimal_p   		/home/jmhodges/software/trimAl/source/
+raxml_p			/home/jmhodges/software/standard-RAxML/
+
+# Alignment Options
+
+custom_blast_search_cmnd
+custom_blast_db_cmnd
+blast_output_file
+min_seq_overlap		0.90
+max_Evalue 		0.001
+min_residue_overlap	0.70
+gap_threshold		0.60
+
+# Tree Settings - Modify these values to generate new trees based off of the fastas found in "03.Alignments/ConcatenatedMSAs"
+
+custom_raxml_command	
+tree_name 
+algorithm		d
+sequence_alignment_f
+substitution_model	GTRGAMMAX
+bootstraps		100
+seed	
+	
+
+
+	
